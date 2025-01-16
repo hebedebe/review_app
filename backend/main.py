@@ -34,7 +34,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         print()
         self.send_response(200)
         self.end_headers()
-        create_user("test_username", "test_uuid", "test_name")
         self.wfile.write(b"recieved.")
 
     def do_POST(self):
@@ -43,18 +42,38 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         match args[0]:
             case "create_user":
                 try:
-                    username = args[1]
-                    uuid = args[2]
+                    uuid = args[1]
+                    username = args[2]
                     name = args[3]
-                    user_created = create_user(username, uuid, name)
+                    user_created = create_user(uuid, username, name)
                     if user_created:
                         self.send_response(201)
                         self.end_headers()
                     else:
                         self.send_response(500)
                         self.end_headers()
-                except:
+                except Exception as e:
+                    print(e)
                     self.send_response(400)
+                    self.end_headers()
+
+            case "update_user":
+                try:
+                    uuid = args[1]
+                    username = args[2]
+                    name = args[3]
+                    user_exists = does_entry_exist("users", "uuid", uuid)
+                    if user_exists:
+                        cur.execute(f'UPDATE users SET username="{username}", name="{name}" WHERE uuid="{uuid}"')
+                        conn.commit()
+                        self.send_response(200)
+                        self.end_headers()
+                    else:
+                        self.send_response(404)
+                        self.end_headers()
+                except Exception as e:
+                    print(e)
+                    self.send_response(500)
                     self.end_headers()
 
             case _:
