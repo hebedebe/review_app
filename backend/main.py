@@ -1,5 +1,5 @@
 import sqlite3 as sql
-import requests
+# import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler, SimpleHTTPRequestHandler
 from threading import Thread
 from uuid import uuid4
@@ -36,11 +36,21 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         match args[0]:
             case "get_token":
                 uuid = args[1]
+                if not does_entry_exist("users", "uuid", uuid):
+                    self.send_response(404)
+                    self.end_headers()
+                    self.wfile.write(b'Invalid UUID')
+                    return
 
                 request_time = time.time()
                 token = str(uuid4())
 
-                user_tokens[token] = request_time
+                user_tokens[token] = {
+                    "time": request_time,
+                    "uuid": uuid
+                }
+
+                print(user_tokens)
 
                 self.send_response(200)
                 self.end_headers()
@@ -126,9 +136,10 @@ user_tokens = {} #token : time of creation
 IP, PORT = "0.0.0.0", 65432
 httpd = HTTPServer((IP, PORT), SimpleHTTPRequestHandler)
 print(f"Starting server on port {PORT}")
-server_thread = Thread(target=httpd.serve_forever, daemon=True)
-server_thread.start()
-print("Started server")
-
-while __name__ == "__main__":
-    ...
+httpd.serve_forever()
+# server_thread = Thread(target=httpd.serve_forever, daemon=True)
+# server_thread.start()
+# print("Started server")
+#
+# while __name__ == "__main__":
+#     ...
