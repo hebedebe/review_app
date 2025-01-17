@@ -7,15 +7,15 @@ import time
 
 from init_db import init_database
 
-def verify_user(username: str, uuid: str): #verify user against uuid
-    cur.execute("select * FROM users WHERE uuid=?", (uuid,))
-    user = cur.fetchone()
-    print(user)
-
 def does_entry_exist(table, heading, contents):
     cur.execute(f"SELECT EXISTS(SELECT 1 FROM {table} WHERE {heading}=\"{contents}\")")
     row = cur.fetchone()
     return row != (0,)
+
+def get_user_from_uuid(uuid):
+    cur.execute("select * FROM users WHERE uuid=?", (uuid,))
+    user = cur.fetchone()
+    return user
 
 def create_user(uuid, username, name=""):
     if (does_entry_exist("users", "username", username) or
@@ -28,8 +28,18 @@ def create_user(uuid, username, name=""):
     print("Created user.")
     return True
 
+def validate_token(token):
+    if token in user_tokens.keys():
+        return time.time() - user_tokens["time"] > TOKEN_TIME
+    return False
+
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def send_invalid_token(self):
+        self.send_response(500)
+        self.end_headers()
+        self.wfile.write(b"Invalid token")
+
     def do_GET(self):
         args = self.path.split("/")[1:]
         print(args)
@@ -101,7 +111,26 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     self.end_headers()
 
             case "post_review":
-                ...
+                (token,
+                parent_id,
+                post_id,
+                owner_uuid,
+                owner_username,
+                date,
+                rating,
+                title,
+                contents,
+                image_id,
+                comment_ids,
+                likes) = args[1:]
+                try:
+                    if not validate_token(token):
+                        self.send_invalid_token()
+                        return
+
+                except:
+                    self.send_response(500)
+                    self.end_headers()
 
             case "edit_review":
                 ...
