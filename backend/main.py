@@ -1,6 +1,9 @@
 import sqlite3 as sql
 import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler, SimpleHTTPRequestHandler
+from threading import Thread
+from uuid import uuid4
+import time
 
 from init_db import init_database
 
@@ -28,13 +31,24 @@ def create_user(uuid, username, name=""):
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        print(self.path)
-        print(self.request)
-        print(self.requestline)
-        print()
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"recieved.")
+        args = self.path.split("/")[1:]
+        print(args)
+        match args[0]:
+            case "get_token":
+                uuid = args[1]
+
+                request_time = time.time()
+                token = str(uuid4())
+
+                user_tokens[token] = request_time
+
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(token.encode())
+
+            case _:
+                self.send_response(200)
+                self.end_headers()
 
     def do_POST(self):
         args = self.path.split("/")[1:]
@@ -106,6 +120,15 @@ cur = conn.cursor()
 
 init_database(cur)
 
+TOKEN_TIME = 5*60*60 #how long tokens stay valid for in seconds
+user_tokens = {} #token : time of creation
+
 IP, PORT = "0.0.0.0", 65432
 httpd = HTTPServer((IP, PORT), SimpleHTTPRequestHandler)
-httpd.serve_forever()
+print(f"Starting server on port {PORT}")
+server_thread = Thread(target=httpd.serve_forever, daemon=True)
+server_thread.start()
+print("Started server")
+
+while __name__ == "__main__":
+    ...
