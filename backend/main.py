@@ -76,6 +76,27 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     self.send_response(500)
                     self.end_headers()
 
+            case "post_review":
+                ...
+
+            case "edit_review":
+                ...
+
+            case "like_review":
+                ...
+
+            case "delete_review":
+                ...
+
+            case "post_comment":
+                ...
+
+            case "edit_comment":
+                ...
+
+            case "delete_comment":
+                ...
+
             case _:
                 self.send_response(501)
                 self.end_headers()

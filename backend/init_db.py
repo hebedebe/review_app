@@ -7,3 +7,4 @@ def init_database(cursor):
     cursor.execute("CREATE TABLE IF NOT EXISTS users (uuid text, username text, name text, bio text, following text,"
                 "followers text, post_ids text)") #all lists (followers, posts, etc) stored in json
 
+    cursor.execute("CREATE TABLE IF NOT EXISTS comments (id text, owner_uuid text, owner_username text, contents text)")
